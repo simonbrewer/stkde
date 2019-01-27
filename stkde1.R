@@ -1,4 +1,4 @@
-## Make up and visualize a ppp object
+## Make up and visualize a ST ppp object
 
 library(rgdal)
 library(rgeos)
@@ -32,8 +32,10 @@ dat.y <- coordinates(dat)[,2]
 sj.ppp <- ppp(dat.x, dat.y,
                    window=sj.owin, marks=dat$median)
 
+## Space time density with default settings
 sj.den1 <- spattemp.density(sj.ppp,tres=500) 
 
+## Plot and compare 
 tims <- c(2000,4000,6000)
 par(mfcol=c(2,3))
 for(i in tims){ 
@@ -52,7 +54,9 @@ hlam <- LIK.spattemp(sj.ppp,tlim=c(0,11000),verbose=FALSE)
 print(hlam)
 sj.den2 <- spattemp.density(sj.ppp,h=hlam[1],lambda=hlam[2], 
                             tlim=c(0,11000),tres=256)
-sj.den2 <- spattemp.density(sj.ppp,h=1.5e4,lambda=500, 
+
+
+sj.den2 <- spattemp.density(sj.ppp,h=2e4,lambda=1000, 
                             tlim=c(0,11000),tres=256)
 
 tims <- c(2000,4000,6000,8000,10000)
@@ -64,7 +68,7 @@ for(i in tims){
 
 tims <- seq(500,10500, by=500)
 ntims = length(tims)
-f.slice <- spattemp.slice(sj.den1,tt=tims)
+f.slice <- spattemp.slice(sj.den2,tt=tims)
 
 for(i in 1:ntims){   
   dens.r = raster(f.slice$z.cond[[i]])
@@ -75,7 +79,7 @@ for(i in 1:ntims){
   }
 }
 
-dens.stk = setZ(brick(dens.stk), tims)
-names(dens.stk) <- paste0("time_",tims)
 writeRaster(dens.stk, "dens.nc", format="netCDF", 
-            varname = "lambda", overwrite=TRUE)
+            varname = "lambda", overwrite=TRUE, bylayer=FALSE)
+save(sj.den2, file="sj.den2.RData")
+# writeRaster(dens.stk, "dens.grd")
