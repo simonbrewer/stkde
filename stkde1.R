@@ -43,19 +43,13 @@ for(i in tims){
   plot(sj.den1,i,"conditional",override.par=FALSE,main=paste("cond.",i))
 }
 
-tims <- c(2000,4000,6000,8000,10000)
-par(mfcol=c(2,3))
-for(i in tims){ 
-  plot(sj.den1,i,"conditional",override.par=FALSE,main=paste("cond.",i))
-}
-
 ## Likelihood based parameter estimates
 hlam <- LIK.spattemp(sj.ppp,tlim=c(0,11000),verbose=FALSE)
 print(hlam)
 sj.den2 <- spattemp.density(sj.ppp,h=hlam[1],lambda=hlam[2], 
                             tlim=c(0,11000),tres=256)
 
-
+## Modified parameters for visualization
 sj.den2 <- spattemp.density(sj.ppp,h=2e4,lambda=1000, 
                             tlim=c(0,11000),tres=256)
 
@@ -65,11 +59,12 @@ for(i in tims){
   plot(sj.den2,i,"conditional",override.par=FALSE,main=paste("cond.",i))
 }
 
-
+## Space-time slices:
 tims <- seq(500,10500, by=500)
 ntims = length(tims)
 f.slice <- spattemp.slice(sj.den2,tt=tims)
 
+## Output to netcdf (not working brilliantly if I'm honest)
 for(i in 1:ntims){   
   dens.r = raster(f.slice$z.cond[[i]])
   if (i == 1) {
