@@ -5,9 +5,13 @@ set.seed(1234)
 library(rgdal)
 library(rgeos)
 library(spatstat)
+library(sparr)
 library(maptools)
 library(rts)
 library(Bchron)
+
+## How many samples?
+nbit = 100
 
 ## Window for analysis
 cnty = readOGR("ut_counties/Counties.shp")
@@ -26,7 +30,7 @@ plot(dat, add=TRUE)
 load("caldates.RData")
 
 ## Sample dates
-caldates.rnd = sampleAges(caldates, n=100)
+caldates.rnd = sampleAges(caldates, n=nbit)
 
 # First convert boundary to owin object
 y <- as(sj.sp, "SpatialPolygons")
@@ -37,11 +41,25 @@ sj.owin <- as(y, "owin")
 dat.x <- coordinates(dat)[,1]
 dat.y <- coordinates(dat)[,2]
 
-# Finally make up ppp object using coordinates, tree names and owin
+# Finally make up ppp object using coordinates and owin
 sj.ppp <- ppp(dat.x, dat.y,
-                   window=sj.owin, marks=t(caldates.rnd))
+                   window=sj.owin)
 
+## Space-time slices:
+tims <- seq(500,10500, by=500)
+ntims = length(tims)
 
+## Parameters for kernel
+hlam <- c(2e4, 1e3)
+
+for (i in 1:nbit) {
+  sj.den2 <- spattemp.density(sj.ppp, tt = caldates.rnd[i,],
+                              h = hlam[1], lambda = hlam[2], 
+                              tlim = c(0,12000), tres = 256)
+  sj.slice <- spattemp.slice(sj.den2,tt=tims)
+  
+  stop()
+}
 
 
 stop()
