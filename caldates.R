@@ -15,5 +15,7 @@ save(caldates, file="caldates.RData")
 
 ## Sample plot
 plot.df = data.frame(ages = caldates$`Date-1`$ageGrid,
-                     density = caldates$`Date-1`$densities)
+                     density = caldates$`Date-1`$densities,
+                     cumldens = cumsum(caldates$`Date-1`$densities))
 ggplot(plot.df, aes(x=ages, y=density)) + geom_line() + theme_bw()
+ggplot(plot.df, aes(x=ages, y=cumldens)) + geom_line() + theme_bw()
