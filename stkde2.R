@@ -6,6 +6,7 @@ library(spatstat)
 library(maptools)
 library(rts)
 library(sparr)
+library(dplyr)
 
 ## Window for analysis
 cnty = readOGR("ut_counties/Counties.shp")
@@ -15,9 +16,12 @@ sj.sp = cnty[cnty$NAME =="SAN JUAN",]
 plot(sj.sp)
 
 ## Data
-dat = read.csv("data/SJco_14C_Dates_Draft_012419.csv")
+dat = read.csv("data/BENM_SiteSummary_032319.csv")
 str(dat)
-coordinates(dat) <- ~Easting+Northing
+dat = dat %>% 
+  filter(!is.na(UTM_N))
+
+coordinates(dat) <- ~UTM_E+UTM_N
 plot(dat, add=TRUE)
 
 # First convert boundary to owin object
@@ -31,13 +35,13 @@ dat.y <- coordinates(dat)[,2]
 
 # Finally make up ppp object using coordinates, tree names and owin
 sj.ppp <- ppp(dat.x, dat.y,
-                   window=sj.owin, marks=dat$median)
+                   window=sj.owin, marks=dat$YearBP)
 
 ## Space time density with default settings
 sj.den1 <- spattemp.density(sj.ppp,tres=500) 
 
 ## Plot and compare 
-tims <- c(2000,4000,6000)
+tims <- c(1000,1500,2000)
 par(mfcol=c(2,3))
 for(i in tims){ 
   plot(sj.den1,i,override.par=FALSE,fix.range=TRUE,main=paste("joint",i))
@@ -45,23 +49,23 @@ for(i in tims){
 }
 
 ## Likelihood based parameter estimates
-hlam <- LIK.spattemp(sj.ppp,tlim=c(0,11000),verbose=FALSE)
-print(hlam)
-sj.den2 <- spattemp.density(sj.ppp,h=hlam[1],lambda=hlam[2], 
-                            tlim=c(0,11000),tres=256)
+# hlam <- LIK.spattemp(sj.ppp,tlim=c(500,2500),verbose=FALSE)
+# print(hlam)
+# sj.den2 <- spattemp.density(sj.ppp,h=hlam[1],lambda=hlam[2], 
+#                             tlim=c(500,2500),tres=128)
 
 ## Modified parameters for visualization
-sj.den2 <- spattemp.density(sj.ppp,h=2e4,lambda=1000, 
-                            tlim=c(0,11000),tres=256)
+sj.den2 <- spattemp.density(sj.ppp,h=2000,lambda=250, 
+                            tlim=c(500,2500),tres=64)
 
-tims <- c(2000,4000,6000,8000,10000)
+tims <- seq(500,2500,by=100)
 par(mfcol=c(2,3))
 for(i in tims){ 
   plot(sj.den2,i,"conditional",override.par=FALSE,main=paste("cond.",i))
 }
 
 ## Space-time slices:
-tims <- seq(500,10500, by=500)
+tims <- seq(500,2500, by=25)
 ntims = length(tims)
 f.slice <- spattemp.slice(sj.den2,tt=tims)
 
@@ -75,7 +79,7 @@ for(i in 1:ntims){
   }
 }
 
-writeRaster(dens.stk, "dens.nc", format="netCDF", 
+writeRaster(dens.stk, "benm.dens.nc", format="netCDF", 
             varname = "lambda", overwrite=TRUE, bylayer=FALSE)
-save(sj.den2, file="sj.den2.RData")
+save(sj.den2, file="benm.den2.RData")
 # writeRaster(dens.stk, "dens.grd")
